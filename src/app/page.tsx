@@ -1,58 +1,90 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import Login from "../login/login";
+import { useAuth } from "@/AuthContext"; // adjust the path if needed
+import { auth } from "../firebase"; // adjust path as needed
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Bell, Moon, Sun } from "lucide-react";
+import { Search, Bell, Moon, Sun, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import TicketOverview from "@/components/dashboard/TicketOverview";
 import NotificationsPanel from "@/components/dashboard/NotificationsPanel";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Dashboard() {
-  const [theme, setTheme] = React.useState("light");
-  const [tickets, setTickets] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const { user, loading } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [theme, setTheme] = useState("light");
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!loading && user) {
+      const fetchTickets = async () => {
+        setLoadingTickets(true);
+        setError(null);
+        try {
+          const res = await fetch(
+            "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065"
+          );
+          if (!res.ok) throw new Error(`Error: ${res.status}`);
+          const data = await res.json();
+          setTickets(data);
+        } catch (err) {
+          console.error(err);
+          setError("Failed to load tickets");
+        } finally {
+          setLoadingTickets(false);
+        }
+      };
+      fetchTickets();
+    }
+  }, [loading, user]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setProfileOpen(false);
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  React.useEffect(() => {
-    const fetchTickets = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(
-          "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065"
-        );
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        const data = await res.json();
-        setTickets(data);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load tickets");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTickets();
-  }, []);
-
-  // Filter tickets by status with case-insensitive string compare
   const totalTickets = tickets.length;
-  const newTickets = tickets.filter(
-    (t) => t.Status?.toLowerCase() === "new"
-  ).length;
-  const inProgressTickets = tickets.filter(
-    (t) => t.Status?.toLowerCase() === "in progress"
-  ).length;
-  const resolvedTickets = tickets.filter(
-    (t) => t.Status?.toLowerCase() === "resolved"
-  ).length;
+  const newTickets = tickets.filter((t) => t.Status?.toLowerCase() === "new").length;
+  const inProgressTickets = tickets.filter((t) => t.Status?.toLowerCase() === "in progress").length;
+  const resolvedTickets = tickets.filter((t) => t.Status?.toLowerCase() === "resolved").length;
+
+  if (loading) {
+    return <p className="p-8 text-center">Checking authentication...</p>;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,7 +94,9 @@ export default function Dashboard() {
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold">Citimax IT Ticketing System</h1>
           </div>
+
           <div className="flex items-center space-x-4">
+            {/* Search */}
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -72,6 +106,7 @@ export default function Dashboard() {
               />
             </div>
 
+            {/* Notifications */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
@@ -84,9 +119,38 @@ export default function Dashboard() {
               </SheetContent>
             </Sheet>
 
+            {/* Theme toggle */}
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
+
+            {/* Profile dropdown */}
+            <div className="relative" ref={profileRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setProfileOpen((open) => !open)}
+                aria-label="User profile"
+              >
+                <User className="h-5 w-5" />
+              </Button>
+
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-background shadow-lg z-20">
+                  <div className="px-4 py-2 text-sm text-muted-foreground break-words">
+                    Signed in as <br />
+                    <strong>{user.email}</strong>
+                  </div>
+                  <div className="border-t border-border"></div>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-muted-foreground/10"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -104,7 +168,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loading ? "Loading..." : totalTickets}</div>
+              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : totalTickets}</div>
               {error && <p className="text-xs text-red-500">{error}</p>}
               <p className="text-xs text-muted-foreground">+5 from yesterday</p>
             </CardContent>
@@ -114,7 +178,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">New Tickets</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loading ? "Loading..." : newTickets}</div>
+              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : newTickets}</div>
               <p className="text-xs text-muted-foreground">+2 in the last hour</p>
             </CardContent>
           </Card>
@@ -123,7 +187,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loading ? "Loading..." : inProgressTickets}</div>
+              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : inProgressTickets}</div>
               <p className="text-xs text-muted-foreground">15 high priority</p>
             </CardContent>
           </Card>
@@ -132,7 +196,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">Resolved Today</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loading ? "Loading..." : resolvedTickets}</div>
+              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : resolvedTickets}</div>
               <p className="text-xs text-muted-foreground">Avg resolution: 3.2 hours</p>
             </CardContent>
           </Card>
@@ -146,16 +210,16 @@ export default function Dashboard() {
             <TabsTrigger value="resolved">Resolved</TabsTrigger>
           </TabsList>
           <TabsContent value="all">
-            <TicketOverview filter="all" tickets={tickets} loading={loading} />
+            <TicketOverview filter="all" tickets={tickets} loading={loadingTickets} />
           </TabsContent>
           <TabsContent value="new">
-            <TicketOverview filter="new" tickets={tickets} loading={loading} />
+            <TicketOverview filter="new" tickets={tickets} loading={loadingTickets} />
           </TabsContent>
           <TabsContent value="in-progress">
-            <TicketOverview filter="in-progress" tickets={tickets} loading={loading} />
+            <TicketOverview filter="in-progress" tickets={tickets} loading={loadingTickets} />
           </TabsContent>
           <TabsContent value="resolved">
-            <TicketOverview filter="resolved" tickets={tickets} loading={loading} />
+            <TicketOverview filter="resolved" tickets={tickets} loading={loadingTickets} />
           </TabsContent>
         </Tabs>
       </main>
