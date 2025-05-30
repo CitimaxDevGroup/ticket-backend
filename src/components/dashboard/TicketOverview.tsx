@@ -66,7 +66,7 @@ export default function TicketOverview() {
         id: `T-${1000 + idx}`,
         title: row.Subject || "No subject",
         description: row.Description || "No description",
-        status: row.Status.toLowerCase(),
+        status: (row.Status || "").toLowerCase(),
         priority: mapPriority(row.Priority),
         createdAt: row.Timestamp || new Date().toISOString(),
         assignedTo: row.Name || "",
@@ -86,7 +86,7 @@ export default function TicketOverview() {
     return "high";
   }
 
-  // <-- Added safe date formatter helper here
+  // Safe date formatter helper
   function formatDate(dateString: string | undefined): string {
     if (!dateString) return "Unknown";
     const date = new Date(dateString);
@@ -181,7 +181,6 @@ export default function TicketOverview() {
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>ID: {ticket.id}</span>
                   <span>•</span>
-                  {/* Use the safe formatDate here */}
                   <span>Created: {formatDate(ticket.createdAt)}</span>
                   {ticket.assignedTo && (
                     <>
