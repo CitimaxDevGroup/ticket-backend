@@ -86,6 +86,14 @@ export default function TicketOverview() {
     return "high";
   }
 
+  // <-- Added safe date formatter helper here
+  function formatDate(dateString: string | undefined): string {
+    if (!dateString) return "Unknown";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Unknown";
+    return date.toLocaleDateString();
+  }
+
   const filteredTickets = tickets.filter((ticket) => {
     if (activeTab !== "all" && ticket.status !== activeTab) return false;
     if (priorityFilter !== "all" && ticket.priority !== priorityFilter) return false;
@@ -173,7 +181,8 @@ export default function TicketOverview() {
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>ID: {ticket.id}</span>
                   <span>•</span>
-                  <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                  {/* Use the safe formatDate here */}
+                  <span>Created: {formatDate(ticket.createdAt)}</span>
                   {ticket.assignedTo && (
                     <>
                       <span>•</span>
@@ -196,9 +205,9 @@ export default function TicketOverview() {
     );
   }
 
-  const uniqueCompanies = Array.from(
-    new Set(tickets.map((t) => t.company))
-  ).sort((a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b));
+  const uniqueCompanies = Array.from(new Set(tickets.map((t) => t.company))).sort(
+    (a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b)
+  );
 
   return (
     <div className="w-full bg-background p-4">
