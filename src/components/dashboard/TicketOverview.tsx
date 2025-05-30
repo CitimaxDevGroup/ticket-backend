@@ -24,10 +24,10 @@ interface Ticket {
   title: string;
   description: string;
   status: string;
-  priority: string;
+  priority: "low" | "medium" | "high";
   createdAt: string;
-  assignedTo?: string;
-  company?: string;
+  assignedTo: string;
+  company: string;
 }
 
 const COMPANY_ORDER = [
@@ -46,7 +46,6 @@ const COMPANY_ORDER = [
   "Citinickel",
 ];
 
-// No props accepted
 export default function TicketOverview() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [activeTab, setActiveTab] = useState("all");
@@ -64,14 +63,14 @@ export default function TicketOverview() {
     try {
       const response = await fetch(SHEET_BEST_URL);
       const data = await response.json();
-      const mapped = data.map((row: any, idx: number) => ({
+      const mapped: Ticket[] = data.map((row: any, idx: number) => ({
         id: `T-${1000 + idx}`,
         title: row.Subject || "No subject",
         description: row.Description || "No description",
-        status: (row.Status || "").toLowerCase(),
+        status: (row.Status || "new").toLowerCase(),
         priority: mapPriority(row.Priority),
         createdAt: row.Timestamp || new Date().toISOString(),
-        assignedTo: row.Name || "",
+        assignedTo: row.Name || "Unassigned",
         company: row.Company || "Unknown",
       }));
       setTickets(mapped);
@@ -88,11 +87,9 @@ export default function TicketOverview() {
     return "high";
   }
 
-  function formatDate(dateString: string | undefined): string {
-    if (!dateString) return "Unknown";
+  function formatDate(dateString: string): string {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Unknown";
-    return date.toLocaleDateString();
+    return isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
   }
 
   const filteredTickets = tickets.filter((ticket) => {
@@ -110,7 +107,7 @@ export default function TicketOverview() {
     return true;
   });
 
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityBadge = (priority: Ticket["priority"]) => {
     switch (priority) {
       case "high":
         return <Badge variant="destructive">High</Badge>;
@@ -118,8 +115,6 @@ export default function TicketOverview() {
         return <Badge variant="secondary">Medium</Badge>;
       case "low":
         return <Badge variant="outline">Low</Badge>;
-      default:
-        return <Badge>{priority}</Badge>;
     }
   };
 
@@ -183,18 +178,10 @@ export default function TicketOverview() {
                   <span>ID: {ticket.id}</span>
                   <span>•</span>
                   <span>Created: {formatDate(ticket.createdAt)}</span>
-                  {ticket.assignedTo && (
-                    <>
-                      <span>•</span>
-                      <span>Assigned to: {ticket.assignedTo}</span>
-                    </>
-                  )}
-                  {ticket.company && (
-                    <>
-                      <span>•</span>
-                      <span>Company: {ticket.company}</span>
-                    </>
-                  )}
+                  <span>•</span>
+                  <span>Assigned to: {ticket.assignedTo}</span>
+                  <span>•</span>
+                  <span>Company: {ticket.company}</span>
                 </div>
               </div>
               <div>{getPriorityBadge(ticket.priority)}</div>
@@ -205,9 +192,9 @@ export default function TicketOverview() {
     );
   }
 
-  const uniqueCompanies = Array.from(new Set(tickets.map((t) => t.company))).sort(
-    (a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b)
-  );
+  const uniqueCompanies = Array.from(
+    new Set(tickets.map((t) => t.company).filter((c): c is string => typeof c === "string"))
+  ).sort((a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b));
 
   return (
     <div className="w-full bg-background p-4">
@@ -221,17 +208,13 @@ export default function TicketOverview() {
           status={selectedTicket.status}
           priority={selectedTicket.priority}
           createdAt={selectedTicket.createdAt}
-          assignedTo={
-            selectedTicket.assignedTo
-              ? {
-                  name: selectedTicket.assignedTo,
-                  initials: selectedTicket.assignedTo
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join(""),
-                }
-              : undefined
-          }
+          assignedTo={{
+            name: selectedTicket.assignedTo,
+            initials: selectedTicket.assignedTo
+              .split(" ")
+              .map((n) => n[0])
+              .join(""),
+          }}
         />
       )}
       <Card className="w-full">
