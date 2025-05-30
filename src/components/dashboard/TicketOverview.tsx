@@ -16,8 +16,7 @@ import {
 import { AlertCircle, CheckCircle, Clock, Filter, Search } from "lucide-react";
 import TicketDetail from "@/components/tickets/TicketDetail";
 
-const SHEET_BEST_URL =
-  "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065";
+const SHEET_BEST_URL = "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065";
 
 interface Ticket {
   id: string;
@@ -67,7 +66,7 @@ export default function TicketOverview() {
         id: `T-${1000 + idx}`,
         title: row.Subject || "No subject",
         description: row.Description || "No description",
-        status: (row.Status || "new").toLowerCase(),
+        status: row.Status.toLowerCase(),
         priority: mapPriority(row.Priority),
         createdAt: row.Timestamp || new Date().toISOString(),
         assignedTo: row.Name || "",
@@ -86,6 +85,21 @@ export default function TicketOverview() {
     if (normalized.includes("med")) return "medium";
     return "high";
   }
+
+  const filteredTickets = tickets.filter((ticket) => {
+    if (activeTab !== "all" && ticket.status !== activeTab) return false;
+    if (priorityFilter !== "all" && ticket.priority !== priorityFilter) return false;
+    if (companyFilter !== "all" && ticket.company !== companyFilter) return false;
+    if (
+      searchQuery &&
+      !ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !ticket.id.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -125,9 +139,7 @@ export default function TicketOverview() {
     if (tickets.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <p className="text-muted-foreground mb-4">
-            No tickets found matching your criteria
-          </p>
+          <p className="text-muted-foreground mb-4">No tickets found matching your criteria</p>
           <Button
             variant="outline"
             onClick={() => {
@@ -157,15 +169,11 @@ export default function TicketOverview() {
                   {getStatusIcon(ticket.status)}
                   <h3 className="font-medium">{ticket.title}</h3>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {ticket.description}
-                </p>
+                <p className="text-sm text-muted-foreground mb-2">{ticket.description}</p>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>ID: {ticket.id}</span>
                   <span>•</span>
-                  <span>
-                    Created: {new Date(ticket.createdAt).toLocaleDateString()}
-                  </span>
+                  <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
                   {ticket.assignedTo && (
                     <>
                       <span>•</span>
@@ -190,27 +198,7 @@ export default function TicketOverview() {
 
   const uniqueCompanies = Array.from(
     new Set(tickets.map((t) => t.company))
-  ).sort((a, b) => {
-    const indexA = COMPANY_ORDER.indexOf(a);
-    const indexB = COMPANY_ORDER.indexOf(b);
-    return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB);
-  });
-
-  const applyFilters = (status: string) =>
-    tickets.filter((ticket) => {
-      if (status !== "all" && ticket.status !== status) return false;
-      if (priorityFilter !== "all" && ticket.priority !== priorityFilter) return false;
-      if (companyFilter !== "all" && ticket.company !== companyFilter) return false;
-      if (
-        searchQuery &&
-        !ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !ticket.id.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
-      return true;
-    });
+  ).sort((a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b));
 
   return (
     <div className="w-full bg-background p-4">
@@ -294,10 +282,10 @@ export default function TicketOverview() {
               <TabsTrigger value="in-progress">In Progress</TabsTrigger>
               <TabsTrigger value="resolved">Resolved</TabsTrigger>
             </TabsList>
-            <TabsContent value="all">{renderTicketList(applyFilters("all"))}</TabsContent>
-            <TabsContent value="new">{renderTicketList(applyFilters("new"))}</TabsContent>
-            <TabsContent value="in-progress">{renderTicketList(applyFilters("in-progress"))}</TabsContent>
-            <TabsContent value="resolved">{renderTicketList(applyFilters("resolved"))}</TabsContent>
+            <TabsContent value="all">{renderTicketList(filteredTickets)}</TabsContent>
+            <TabsContent value="new">{renderTicketList(filteredTickets)}</TabsContent>
+            <TabsContent value="in-progress">{renderTicketList(filteredTickets)}</TabsContent>
+            <TabsContent value="resolved">{renderTicketList(filteredTickets)}</TabsContent>
           </Tabs>
         </CardContent>
       </Card>
