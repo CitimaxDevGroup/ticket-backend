@@ -67,7 +67,7 @@ export default function TicketOverview() {
         id: `T-${1000 + idx}`,
         title: row.Subject || "No subject",
         description: row.Description || "No description",
-        status: row.Status.toLowerCase(),
+        status: (row.Status || "new").toLowerCase(),
         priority: mapPriority(row.Priority),
         createdAt: row.Timestamp || new Date().toISOString(),
         assignedTo: row.Name || "",
@@ -188,9 +188,13 @@ export default function TicketOverview() {
     );
   }
 
-  const uniqueCompanies = Array.from(new Set(tickets.map((t) => t.company))).sort(
-    (a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b)
-  );
+  const uniqueCompanies = Array.from(
+    new Set(tickets.map((t) => t.company))
+  ).sort((a, b) => {
+    const indexA = COMPANY_ORDER.indexOf(a);
+    const indexB = COMPANY_ORDER.indexOf(b);
+    return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB);
+  });
 
   const applyFilters = (status: string) =>
     tickets.filter((ticket) => {
@@ -290,7 +294,6 @@ export default function TicketOverview() {
               <TabsTrigger value="in-progress">In Progress</TabsTrigger>
               <TabsTrigger value="resolved">Resolved</TabsTrigger>
             </TabsList>
-
             <TabsContent value="all">{renderTicketList(applyFilters("all"))}</TabsContent>
             <TabsContent value="new">{renderTicketList(applyFilters("new"))}</TabsContent>
             <TabsContent value="in-progress">{renderTicketList(applyFilters("in-progress"))}</TabsContent>
