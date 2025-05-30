@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Login from "../login/login";
-import { useAuth } from "@/AuthContext"; // adjust the path if needed
-import { auth } from "../firebase"; // adjust path as needed
+import { useAuth } from "@/AuthContext";
+import { auth } from "../firebase";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +53,6 @@ export default function Dashboard() {
         setProfileOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -168,7 +167,9 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : totalTickets}</div>
+              <div className="text-2xl font-bold">
+                {loadingTickets ? "Loading..." : totalTickets}
+              </div>
               {error && <p className="text-xs text-red-500">{error}</p>}
               <p className="text-xs text-muted-foreground">+5 from yesterday</p>
             </CardContent>
@@ -178,7 +179,9 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">New Tickets</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : newTickets}</div>
+              <div className="text-2xl font-bold">
+                {loadingTickets ? "Loading..." : newTickets}
+              </div>
               <p className="text-xs text-muted-foreground">+2 in the last hour</p>
             </CardContent>
           </Card>
@@ -187,7 +190,9 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : inProgressTickets}</div>
+              <div className="text-2xl font-bold">
+                {loadingTickets ? "Loading..." : inProgressTickets}
+              </div>
               <p className="text-xs text-muted-foreground">15 high priority</p>
             </CardContent>
           </Card>
@@ -196,7 +201,9 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">Resolved Today</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loadingTickets ? "Loading..." : resolvedTickets}</div>
+              <div className="text-2xl font-bold">
+                {loadingTickets ? "Loading..." : resolvedTickets}
+              </div>
               <p className="text-xs text-muted-foreground">Avg resolution: 3.2 hours</p>
             </CardContent>
           </Card>
@@ -209,17 +216,18 @@ export default function Dashboard() {
             <TabsTrigger value="in-progress">In Progress</TabsTrigger>
             <TabsTrigger value="resolved">Resolved</TabsTrigger>
           </TabsList>
+
           <TabsContent value="all">
-            <TicketOverview filter="all" tickets={tickets} loading={loadingTickets} />
+            <TicketOverview />
           </TabsContent>
           <TabsContent value="new">
-            <TicketOverview filter="new" tickets={tickets} loading={loadingTickets} />
+            <TicketOverview />
           </TabsContent>
           <TabsContent value="in-progress">
-            <TicketOverview filter="in-progress" tickets={tickets} loading={loadingTickets} />
+            <TicketOverview />
           </TabsContent>
           <TabsContent value="resolved">
-            <TicketOverview filter="resolved" tickets={tickets} loading={loadingTickets} />
+            <TicketOverview />
           </TabsContent>
         </Tabs>
       </main>
