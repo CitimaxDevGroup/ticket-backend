@@ -3,22 +3,18 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 
 const Login: React.FC = () => {
-  // --- Login states ---
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // --- Request Help form states ---
   const [helpEmail, setHelpEmail] = useState("");
   const [helpMessage, setHelpMessage] = useState("");
   const [helpError, setHelpError] = useState("");
   const [helpSuccess, setHelpSuccess] = useState("");
 
-  // Toggle form view
   const [rightPanelActive, setRightPanelActive] = useState(false);
 
-  // Handle user login with Firebase Auth
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -26,7 +22,6 @@ const Login: React.FC = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Successful login - you can redirect or update UI here
     } catch (err) {
       setError("Invalid credentials. Please try again.");
     } finally {
@@ -34,7 +29,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // Handle help request submission to Google Sheets via Apps Script
   const handleHelpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHelpError("");
@@ -50,20 +44,18 @@ const Login: React.FC = () => {
     }
 
     try {
-      // Prepare data as URL encoded form
       const data = {
         email: helpEmail,
         message: helpMessage,
       };
 
-      // Convert to x-www-form-urlencoded format
       const formBody = new URLSearchParams(data).toString();
 
       await fetch(
-        "https://script.google.com/macros/s/AKfycbyBPusqS7raGi_x1-JsIBMEIjzNcFI0Ix878ij7WqR3cZhvTqeFys6cUdc0yor_0z84rw/exec", // <-- Replace YOUR_SCRIPT_ID with your Apps Script URL
+        "https://script.google.com/macros/s/AKfycbyBPusqS7raGi_x1-JsIBMEIjzNcFI0Ix878ij7WqR3cZhvTqeFys6cUdc0yor_0z84rw/exec",
         {
           method: "POST",
-          mode: "no-cors", // Important to avoid CORS errors
+          mode: "no-cors",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
@@ -71,7 +63,6 @@ const Login: React.FC = () => {
         }
       );
 
-      // Because of no-cors, we can't read the response; assume success if no error thrown
       setHelpSuccess("Your request has been submitted. We'll get back to you soon.");
       setHelpEmail("");
       setHelpMessage("");
@@ -127,7 +118,6 @@ const Login: React.FC = () => {
             transition: "all 0.6s ease-in-out",
             zIndex: rightPanelActive ? 1 : 2,
             transform: rightPanelActive ? "translateX(100%)" : "translateX(0)",
-            left: 0,
           }}
         >
           <img
@@ -213,7 +203,6 @@ const Login: React.FC = () => {
             color: "#111",
             boxSizing: "border-box",
             transition: "all 0.6s ease-in-out",
-            left: "50%",
             zIndex: rightPanelActive ? 2 : 1,
             opacity: rightPanelActive ? 1 : 0,
             pointerEvents: rightPanelActive ? "auto" : "none",
