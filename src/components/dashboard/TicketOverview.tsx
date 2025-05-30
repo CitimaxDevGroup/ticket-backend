@@ -204,13 +204,9 @@ export default function TicketOverview() {
     );
   }
 
-  const uniqueCompanies = Array.from(
-    new Set(tickets.map((t) => t.company).filter((c): c is string => !!c))
-  ).sort((a, b) => {
-    const indexA = COMPANY_ORDER.indexOf(a);
-    const indexB = COMPANY_ORDER.indexOf(b);
-    return indexA - indexB;
-  });
+  const uniqueCompanies = Array.from(new Set(tickets.map((t) => t.company ?? "Unknown"))).sort(
+    (a, b) => COMPANY_ORDER.indexOf(a) - COMPANY_ORDER.indexOf(b)
+  );
 
   return (
     <div className="w-full bg-background p-4">
@@ -241,7 +237,7 @@ export default function TicketOverview() {
                   <SelectTrigger className="w-[130px]">
                     <SelectValue placeholder="Priority" />
                   </SelectTrigger>
-                  <SelectContent portal={false}>
+                  <SelectContent>
                     <SelectItem value="all">All Priorities</SelectItem>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
@@ -252,7 +248,7 @@ export default function TicketOverview() {
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Company" />
                   </SelectTrigger>
-                  <SelectContent portal={false}>
+                  <SelectContent>
                     <SelectItem value="all">All Companies</SelectItem>
                     {uniqueCompanies.map((c) => (
                       <SelectItem key={c} value={c}>
