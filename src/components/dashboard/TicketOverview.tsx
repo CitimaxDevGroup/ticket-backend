@@ -16,7 +16,8 @@ import {
 import { AlertCircle, CheckCircle, Clock, Filter, Search } from "lucide-react";
 import TicketDetail from "@/components/tickets/TicketDetail";
 
-const SHEET_BEST_URL = "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065";
+const SHEET_BEST_URL =
+  "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065";
 
 interface Ticket {
   id: string;
@@ -45,6 +46,7 @@ const COMPANY_ORDER = [
   "Citinickel",
 ];
 
+// No props accepted
 export default function TicketOverview() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [activeTab, setActiveTab] = useState("all");
@@ -86,7 +88,6 @@ export default function TicketOverview() {
     return "high";
   }
 
-  // Safe date formatter helper
   function formatDate(dateString: string | undefined): string {
     if (!dateString) return "Unknown";
     const date = new Date(dateString);
