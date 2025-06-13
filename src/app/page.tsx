@@ -14,6 +14,7 @@ import TicketOverview from "@/components/dashboard/TicketOverview";
 import NotificationsPanel from "@/components/dashboard/NotificationsPanel";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showIdComponent, setShowIdComponent] = useState(false); // ✅ Toggle state
 
   const profileRef = useRef<HTMLDivElement>(null);
 

@@ -14,7 +14,13 @@ import {
   SelectValue,    
 } from "@/components/ui/select";
 import { AlertCircle, CheckCircle, Clock, Filter, Search } from "lucide-react";
-import TicketDetail from "@/components/tickets/TicketDetail";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 const SHEET_BEST_URL =
   "https://api.sheetbest.com/sheets/53d1c70b-ebb2-4a25-8afd-32ffb7da9065";
@@ -46,9 +52,111 @@ const COMPANY_ORDER = [
   "Citinickel",
 ];
 
+function TicketDetail({
+  isOpen,
+  onClose,
+  ticket,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  ticket: Ticket;
+}) {
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return <Badge variant="destructive">High</Badge>;
+      case "medium":
+        return <Badge variant="secondary">Medium</Badge>;
+      case "low":
+        return <Badge variant="outline">Low</Badge>;
+      default:
+        return <Badge>{priority}</Badge>;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "new":
+        return <Badge variant="destructive">New</Badge>;
+      case "in-progress":
+        return <Badge variant="secondary">In Progress</Badge>;
+      case "resolved":
+        return <Badge variant="default">Resolved</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  function formatDate(dateString: string | undefined): string {
+    if (!dateString) return "Unknown";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Unknown";
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            Ticket Details: {ticket.id}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <h3 className="font-medium">Title</h3>
+              <p className="text-sm">{ticket.title}</p>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-medium">Company</h3>
+              <p className="text-sm">{ticket.company || "Unknown"}</p>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="font-medium">Description</h3>
+            <p className="text-sm whitespace-pre-line">{ticket.description}</p>
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <h3 className="font-medium">Status</h3>
+              <div>{getStatusBadge(ticket.status)}</div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-medium">Priority</h3>
+              <div>{getPriorityBadge(ticket.priority)}</div>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-medium">Created</h3>
+              <p className="text-sm">{formatDate(ticket.createdAt)}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <h3 className="font-medium">Requested by: </h3>
+              <p className="text-sm">{ticket.assignedTo || "Unassigned"}</p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function TicketOverview() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("new");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,7 +259,6 @@ export default function TicketOverview() {
           <Button
             variant="outline"
             onClick={() => {
-              setActiveTab("all");
               setPriorityFilter("all");
               setCompanyFilter("all");
               setSearchQuery("");
@@ -185,7 +292,7 @@ export default function TicketOverview() {
                   {ticket.assignedTo && (
                     <>
                       <span>•</span>
-                      <span>Assigned to: {ticket.assignedTo}</span>
+                      <span>Requested by: {ticket.assignedTo}</span>
                     </>
                   )}
                   {ticket.company && (
@@ -263,18 +370,16 @@ export default function TicketOverview() {
         </CardHeader>
         <CardContent>
           <Tabs
-            defaultValue="all"
+            defaultValue="new"
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-4 mb-4">
-              <TabsTrigger value="all">All</TabsTrigger>
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="new">New</TabsTrigger>
               <TabsTrigger value="in-progress">In Progress</TabsTrigger>
               <TabsTrigger value="resolved">Resolved</TabsTrigger>
             </TabsList>
-            <TabsContent value="all">{renderTicketList(filteredTickets)}</TabsContent>
             <TabsContent value="new">{renderTicketList(filteredTickets)}</TabsContent>
             <TabsContent value="in-progress">{renderTicketList(filteredTickets)}</TabsContent>
             <TabsContent value="resolved">{renderTicketList(filteredTickets)}</TabsContent>
